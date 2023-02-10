@@ -1,0 +1,28 @@
+h2 class="editpage" <a href="/database/new">Click here to make new entry!</a>
+
+div class="edit_and_new"
+  ol class="editpage"
+    li class="editpage"
+      p class="editpage1" title
+      p class="editpage" release_year
+      p class="editpage" console_id
+      p class="editpage" part_of_series
+      p class="editpage" genre ids
+    -games.each do |game|
+       li
+         form action="/database/#{game['id']}/update" method="POST"
+          input autocomplete="off" class="title" type="text" name="title" value="#{game["title"]}"
+          input autocomplete="off" type="number" name="release_year" value="#{game["release_year"]}"
+          input autocomplete="off" type="number" name="console_id" value="#{game["console_id"]}"
+          input autocomplete="off" type="text" name="part_of_series" value="#{game["part_of_series"]}"
+          input autocomplete="off" type="text" name="genres" value="#{game_genres[game['id']]}"
+          input autocomplete="off" type="submit" value="submit"
+
+  table
+    tr
+      th console
+      th console_id
+    - consoles.each do |console|
+      tr
+        td #{console["name"]}
+        td #{console["id"]}

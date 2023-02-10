@@ -1,0 +1,137 @@
+* {
+    margin: 0px;
+    padding: 0px;
+}
+
+html{
+}
+
+body{
+    background-color: beige;
+    margin:0;
+    font-family:Arial, Helvetica, sans-serif;
+    font-weight:500;
+    color: #ffffff;
+}
+
+nav{
+    height: 150px;
+    background:rgba(80,80,80,0.2);
+    display:flex;
+    justify-content: space-around;
+    position: relative;
+    align-items:center;
+}
+
+a{
+    color:black;
+}
+
+nav a, nav a:link {
+    text-transform:uppercase;
+    font-size:1.2em;
+    font-weight:900;
+    opacity:0.5;
+}
+
+h1{
+    color: black;
+    font-size: 2.5em;
+    margin-left: 10px;
+    font-family: KidZone;
+}
+
+div.homepage{
+    display: flex;
+    justify-content: space-evenly;
+}
+
+hr.homepage{
+    margin-left: 10px;
+    width: 500px;
+}
+
+p.homepage{
+    color: black;
+    margin-left: 10px;
+    margin-top:10px;
+}
+
+article.homepage {
+    height: 650px;
+    width: 550px;
+    border: solid black 3px;
+    border-radius: 15px;
+    margin-top: 50px;
+}
+
+img.homepage{
+    margin-top: 20px;
+    width:550px;
+}
+
+ol.viewpage{
+    color: black;
+}
+
+h2.editpage{
+    margin-top: 20px;
+    margin-bottom: 20px;
+    margin-left: 450px;
+}
+
+div.edit_and_new{
+    display: flex;
+    justify-content: space-around;
+}
+
+ol.editpage{
+    list-style: none;
+}
+
+li.editpage{
+    display:flex;
+}
+
+table, td{
+    border: black solid 3px;
+}
+
+th, td{
+    text-align: center;
+    color:black;
+}
+
+input.title{
+    width: 300px;
+}
+
+p.editpage1{
+    text-align: center;
+    width: 300px;
+    color:black;
+}
+
+p.editpage{
+    text-align: center;
+    width: 145px;
+    color: black;
+}
+
+h1.newpage{
+    margin-top: 19px;
+    margin-left: 450px;
+}
+
+form.newpage{
+    margin-top: 18px;
+}
+
+table{
+    width: 300px;
+    height: 378px;
+}
+
+table.newpage{
+    margin-bottom: 0px;
+}

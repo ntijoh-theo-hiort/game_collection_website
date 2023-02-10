@@ -1,0 +1,19 @@
+h1 class="newpage" Make new entry
+
+div class="edit_and_new"
+  form class="newpage" action="/database/new" method="POST"
+    input autocomplete="off" class="title" type="text" name="title" placeholder="title"
+    input autocomplete="off" type="number" name="release_year" placeholder="release_year"
+    input autocomplete="off" type="number" name="console_id" placeholder="console_id"
+    input autocomplete="off" type="text" name="part_of_series" placeholder="part_of_series"
+    input autocomplete="off" type="text" name="genres" placeholder="genres"
+    input autocomplete="off" type="submit" value="submit"
+
+  table class="newpage"
+    tr
+      th console
+      th console_id
+    - consoles.each do |console|
+      tr
+        td #{console["name"]}
+        td #{console["id"]}

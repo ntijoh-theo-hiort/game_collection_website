@@ -1,0 +1,6 @@
+article
+  h1 Me Games!!
+  ol
+    - games.each do |game|
+      li
+        a href="database/#{game['id']}" #{game['title']}
