@@ -9,11 +9,24 @@ div class="edit_and_new"
     input autocomplete="off" type="text" name="genres" placeholder="genres"
     input autocomplete="off" type="submit" value="submit"
 
-  table class="newpage"
-    tr
-      th console
-      th console_id
-    - consoles.each do |console|
+  aside class="edit_and_new" 
+    table
       tr
-        td #{console["name"]}
-        td #{console["id"]}
+        th console
+        th console_id
+      - consoles.each do |console|
+        tr
+          td #{console["name"]}
+          td #{console["id"]}
+      tr 
+        th 
+          hr
+        th 
+          hr
+      tr 
+        th genre 
+        th genre_id 
+      - genres.each do |genre|
+        tr 
+          td #{genre["name"]}
+          td #{genre["id"]}
