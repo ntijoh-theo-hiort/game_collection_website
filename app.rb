@@ -98,7 +98,7 @@ get('/database/:id') do
 
   genres = genres.chomp(' ')
   
-  imgpath = "img/#{params[:id]}.webp"
+  imgpath = "/img/#{id}.jpg"
   slim(:'games/show', locals:{game:game, console:console, genres:genres, imgpath:imgpath})
 end
 

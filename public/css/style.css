@@ -83,6 +83,15 @@ ol.viewpage{
     color: black;
 }
 
+img.showpage{
+    position: absolute;
+    object-fit:;
+    left: 750px;
+    bottom: 0px;
+    width:450px;
+    height:570px;
+}
+
 h2.editpage{
     margin-top: 20px;
     margin-bottom: 20px;
