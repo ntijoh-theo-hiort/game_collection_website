@@ -2,6 +2,7 @@
 require 'sinatra/reloader'
 require 'pp'
 require 'sqlite3'
+require_relative 'model.rb'
 enable :sessions
 
 get('/') do
@@ -61,7 +62,7 @@ get('/database/edit') do
   end
 
   game_genres = game_genres.to_h
-  slim(:'games/editpage', locals:{games:games, consoles:consoles, game_genres:game_genres, genres:genres})
+  slim(:'games/edit', locals:{games:games, consoles:consoles, game_genres:game_genres, genres:genres})
 end
 
 
@@ -137,6 +138,11 @@ post('/database/:id/update') do
   genres.each do |genre|
     db.execute('INSERT INTO game_genres (game_id, genre_id) VALUES (?,?)', id, genre)
   end
+  redirect('/database/edit')
+end
+
+post('/database/:id/delete') do
+  Database.new.delete_game(params[:id])
   redirect('/database/edit')
 end
 
