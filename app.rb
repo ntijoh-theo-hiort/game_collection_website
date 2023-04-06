@@ -2,13 +2,23 @@
 require 'sinatra/reloader'
 require 'pp'
 require 'sqlite3'
+require 'bcrypt'
 require_relative 'model.rb'
 enable :sessions
 
+before do 
+  if request.request_method == 'GET'
+    if session[:whosloggedin] == nil && request.path != '/login' && request.path != '/' && request.path != '/error'
+      session[:error_text] = "You can't access this page unless you're logged in. Click back to go to the login page."
+      session[:error_redirect] = '/login'
+      redirect('/error')
+    end
+  end
+end
+
 get('/') do
-  db = SQLite3::Database.new('db/game_collection.db')
-  db.results_as_hash = true
-  amount = db.execute('SELECT * FROM games').count
+  db = Database.new
+  amount = db.all_games.count
   slim(:start, locals:{amount:amount})
 end
 
@@ -42,17 +52,23 @@ post('/database') do
 end
 
 get('/database/edit') do
-  db = SQLite3::Database.new('db/game_collection.db')
-  db.results_as_hash = true
-  games = db.execute('SELECT * FROM games ORDER BY title')
-  consoles = db.execute('SELECT * FROM consoles')
-  genres = db.execute('SELECT * FROM genres')
+  db = Database.new
+  if db.username_is_admin?(session[:whosloggedin]) == false
+    session[:error_text] = 'This page is only accessible for admin users'
+    session[:error_redirect] = '/'
+    redirect('/error')
+  end
+
+  db = Database.new
+  games = db.all_games
+  consoles = db.all_consoles
+  genres = db.all_genres
 
   game_genres = []      
   games.each do |game|    
     array = []
     array << game['id']
-    genres_of_current_game = db.execute('SELECT genre_id FROM game_genres WHERE game_id = ?', game['id'])
+    genres_of_current_game = db.genres_of_game_by_id(game[:id])
     string_of_genres = ""
     genres_of_current_game.each do |genre|
       string_of_genres << genre['genre_id'].to_s + " "
@@ -67,34 +83,31 @@ end
 
 
 get('/database/new') do
-  db = SQLite3::Database.new('db/game_collection.db')
-  db.results_as_hash = true
-  consoles = db.execute('SELECT * FROM consoles')
-  genres = db.execute('SELECT * FROM genres')
+  db = Database.new
+  consoles = db.all_consoles
+  genres = db.all_genres
 
   slim(:'games/new', locals:{consoles:consoles, genres:genres})
 end
 
 get('/database/:id') do
+  db = Database.new
   id = params[:id]
-  db = SQLite3::Database.new('db/game_collection.db')
-  db.results_as_hash = true
-  game = db.execute('SELECT * FROM games WHERE id = ?', id).first
-  console = db.execute('SELECT * FROM consoles WHERE id = ?', game['console_id']).first
-  db.results_as_hash = false
-  genre_ids = db.execute('SELECT genre_id FROM game_genres WHERE game_id = ?', id)
+  game = db.game_hash_by_id(id)
+  console = db.console_hash_by_game_id(id)
+  genre_ids = db.genres_of_game_by_id(id)
   genres = ""
-  genres << db.execute('SELECT name FROM genres WHERE id = ?', genre_ids[0]).first.first
+  genres << db.genre_name_by_id(genre_ids[0])
 
   if genre_ids.count > 2
     genre_ids[1...-1].each do |genre_id|
-      genres << ', ' + db.execute('SELECT name FROM genres WHERE id = ?', genre_id).first.first
+      genres << ', ' + db.genre_name_by_id(genre_id)
     end
   end
 
   unless genre_ids.count == 1
     genres << ' and '
-    genres << db.execute('SELECT name FROM genres WHERE id = ?', genre_ids[-1]).first.first
+    genres << db.genre_name_by_id(genre_ids[-1])
   end
 
   genres = genres.chomp(' ')
@@ -103,15 +116,15 @@ get('/database/:id') do
   slim(:'games/show', locals:{game:game, console:console, genres:genres, imgpath:imgpath})
 end
 
-get('/error') do
-  puts session[:error_text]
+get('/login') do
+  slim(:login, locals:{whosloggedin:session[:whosloggedin]})
+end
 
-  begin
-  session[:error_text]
-  session[:error_redirect]
-  rescue NoMethodError
+get('/error') do
+  unless defined?(session[:error_text]) && defined?(session[:error_redirect])
     redirect('/')
   end
+
   slim(:error, locals:{error_text:session[:error_text], error_redirect:session[:error_redirect]})
 end
 
@@ -121,9 +134,9 @@ post('/database/:id/update') do
   release_year = params[:release_year].chomp(' ')
   console_id = params[:console_id].chomp(' ')
   part_of_series = params[:part_of_series].chomp(' ')
-  genres = params[:genres].split(' ')
+  genre_ids = params[:genres].split(' ')
 
-  [title, release_year, console_id, part_of_series, genres].each do |param|
+  [title, release_year, console_id, part_of_series, genre_ids].each do |param|
     if param == ''
       session[:error_text] = 'invalid entry: every box must be filled'
       session[:error_redirect] = '/database/edit'
@@ -133,10 +146,10 @@ post('/database/:id/update') do
 
   db = SQLite3::Database.new('db/game_collection.db')
   db.results_as_hash = true
-  db.execute('UPDATE games SET title=?, release_year=?, console_id=?, part_of_series=? WHERE id=?', title, release_year, console_id, part_of_series, id)
-  db.execute('DELETE FROM game_genres WHERE game_id=?', id)
-  genres.each do |genre|
-    db.execute('INSERT INTO game_genres (game_id, genre_id) VALUES (?,?)', id, genre)
+  db.update_game(title, release_year, console_id, part_of_series, id)
+  db.game_genres_delete_all_by_game_id(id)
+  genre_ids.each do |genre_id|
+    db.game_genres_insert_new(id, genre_id)
   end
   redirect('/database/edit')
 end
@@ -155,18 +168,72 @@ post('/database/new') do
 
   [title, release_year, console_id, part_of_series, genres].each do |param|
     if param == ''
-      session[:error_text] = 'invalid entry: every box must be filled'
+      session[:error_text] = 'invalid entry: you must fill in all required boxes'
       session[:error_redirect] = '/database/new'
       redirect('/error')
     end
   end
 
-  db = SQLite3::Database.new('db/game_collection.db')
-  id = db.execute('SELECT MAX(id) FROM games')[0][0] + 1
-  db.results_as_hash = true
+  db = Database.new
+  id = db.create_id_for_new_game
   genres.each do |genre|
-    db.execute('INSERT INTO game_genres (game_id, genre_id) VALUES (?,?)', id, genre)
+    db.add_game_genres(id, genre)
   end
-  db.execute('INSERT INTO games (title, release_year, console_id, part_of_series) VALUES (?,?,?,?)', title,release_year, console_id, part_of_series)
+  db.insert_into_new_game(title, release_year, console_id, part_of_series)
   redirect('/database')
+end
+
+post('/createaccount') do
+  username = params[:username]
+  password = params[:password]
+  passwordconfirm = params[:passwordconfirm]
+
+  if password == '' || username == ''
+    session[:error_text] = "invalid login: you must fill in all required boxes"
+    session[:error_redirect] = '/login'
+    redirect('/error')
+  elsif password != passwordconfirm
+    session[:error_text] = "invalid login: both passwords must match"
+    session[:error_redirect] = '/login'
+    redirect('/error')
+  elsif password !~ /^(?=.*\d)(?=.*[[:punct:]])(?=.*[[:upper:]]).*$/
+    session[:error_text] = "invalid login: password must contain at least one digit, one capital letter, and one special character"
+    session[:error_redirect] = '/login'
+    redirect('/error')
+  elsif Database.new.username_is_unique?(username) == false
+    session[:error_text] = "invalid login: a user with that name already exists"
+    session[:error_redirect] = '/login'
+    redirect('/error')
+  end
+
+  pwdigest = BCrypt::Password.create(password)
+  Database.new.create_account(username, pwdigest)
+  session[:whosloggedin] = username
+  redirect('/login')
+end
+
+post('/login') do
+  username = params[:username]
+  password = params[:password]
+  if Database.new.username_exists(username)
+    pwdigest = Database.new.fetch_pwdigest_from_user(username).first.first
+    if BCrypt::Password.new(pwdigest) == password
+      session[:whosloggedin] = username
+      redirect('/login')
+    else
+      sleep(3)
+      session[:error_text] = "invalid login: wrong password for that user"
+      session[:error_redirect] = '/login'
+      redirect('/error')
+    end
+  else
+    session[:error_text] = "invalid login: no user with that username exists"
+    session[:error_redirect] = '/login'
+    redirect('/error')
+  end
+end
+
+post('/logout') do
+  session[:whosloggedin] = nil
+  redirect('/login')
 end
