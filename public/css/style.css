@@ -83,6 +83,14 @@ ol.viewpage{
     color: black;
 }
 
+a.showpage{
+    height:30px;
+}
+
+li.showpage{
+    list-style: none;
+}
+
 article.showpage{
     width: 100%;
     height: 100%;

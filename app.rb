@@ -23,17 +23,16 @@ get('/') do
 end
 
 get('/database') do
-  db = SQLite3::Database.new('db/game_collection.db')
-  db.results_as_hash = true
+  db = Database.new
 
   begin
     whatgames
   rescue NameError
-    games = db.execute('SELECT * FROM games ORDER BY title')
+    games = db.all_games
   else
     case whatgames
     when 'all'
-      games = db.execute('SELECT * FROM games ORDER BY title')
+      games = db.all_games
     when 'console'
       p 'yoda'
       games = db.execute('SELECT * FROM games WHERE console_id = ? ORDER BY title', console)
@@ -68,10 +67,10 @@ get('/database/edit') do
   games.each do |game|    
     array = []
     array << game['id']
-    genres_of_current_game = db.genres_of_game_by_id(game[:id])
+    genres_of_current_game = db.genres_of_game_by_id(game['id'])
     string_of_genres = ""
     genres_of_current_game.each do |genre|
-      string_of_genres << genre['genre_id'].to_s + " "
+      string_of_genres << genre.to_s + " "
     end
     array << string_of_genres.chomp(' ')
     game_genres << array
@@ -84,6 +83,13 @@ end
 
 get('/database/new') do
   db = Database.new
+
+  if db.username_is_admin?(session[:whosloggedin]) == false
+    session[:error_text] = 'This page is only accessible for admin users'
+    session[:error_redirect] = '/'
+    redirect('/error')
+  end
+
   consoles = db.all_consoles
   genres = db.all_genres
 
@@ -97,7 +103,7 @@ get('/database/:id') do
   console = db.console_hash_by_game_id(id)
   genre_ids = db.genres_of_game_by_id(id)
   genres = ""
-  genres << db.genre_name_by_id(genre_ids[0])
+  genres << db.genre_name_by_id(genre_ids[0].to_i)
 
   if genre_ids.count > 2
     genre_ids[1...-1].each do |genre_id|
@@ -105,15 +111,19 @@ get('/database/:id') do
     end
   end
 
-  unless genre_ids.count == 1
+  if genre_ids.count == 1
+    genre_or_genres = "genre"
+  else
     genres << ' and '
     genres << db.genre_name_by_id(genre_ids[-1])
+    genre_or_genres = "genres"
   end
+
 
   genres = genres.chomp(' ')
   
   imgpath = "/img/#{id}.jpg"
-  slim(:'games/show', locals:{game:game, console:console, genres:genres, imgpath:imgpath})
+  slim(:'games/show', locals:{game:game, console:console, genres:genres, imgpath:imgpath, genre_or_genres:genre_or_genres})
 end
 
 get('/login') do
@@ -144,8 +154,7 @@ post('/database/:id/update') do
     end
   end
 
-  db = SQLite3::Database.new('db/game_collection.db')
-  db.results_as_hash = true
+  db = Database.new
   db.update_game(title, release_year, console_id, part_of_series, id)
   db.game_genres_delete_all_by_game_id(id)
   genre_ids.each do |genre_id|
@@ -177,9 +186,10 @@ post('/database/new') do
   db = Database.new
   id = db.create_id_for_new_game
   genres.each do |genre|
+    p genre
     db.add_game_genres(id, genre)
   end
-  db.insert_into_new_game(title, release_year, console_id, part_of_series)
+  db.insert_into_new_game(id, title, release_year, console_id, part_of_series)
   redirect('/database')
 end
 

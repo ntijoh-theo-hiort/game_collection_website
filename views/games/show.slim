@@ -1,16 +1,13 @@
 article class="showpage"
-  a href="/database" back 
+  a class="showpage" href="/database" back 
   div class="showpage"
     h1 #{game["title"]}
     ol class = "viewpage"
-      li #{game['title']} came out in <b>#{game["release_year"]}</b>
-      li This copy of the game is for the <b>#{console["name"]}</b> console which came out in <b>#{console["release_year"]}</b> by the company <b>#{console["company"]}</b>
+      li class="showpage" #{game['title']} came out in <b>#{game["release_year"]}</b>
+      li class="showpage" This copy of the game is for the <b>#{console["name"]}</b> console which came out in <b>#{console["release_year"]}</b> by the company <b>#{console["company"]}</b>
       - if game["part_of_series"] == "Yes"
-        li The game <b>is</b> part of a series of games
+        li class="showpage" The game <b>is</b> part of a series of games
       - else
-        li The game is <b>not</b> part of a series of games
-      - if genres.split(' ').count > 2
-        li It can be described by the genres <b>#{genres}</b>
-      -else
-        li It can be described by the genre <b>#{genres}</b>
+        li class="showpage" The game is <b>not</b> part of a series of games
+      li class="showpage" It can be described by the #{genre_or_genres} <b>#{genres}</b>
   img class="showpage" src="#{imgpath}" alt="current game"
