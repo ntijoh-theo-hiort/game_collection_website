@@ -131,7 +131,7 @@ get('/login') do
 end
 
 get('/error') do
-  unless defined?(session[:error_text]) && defined?(session[:error_redirect])
+  if session[:error_text] == nil
     redirect('/')
   end
 
@@ -206,8 +206,8 @@ post('/createaccount') do
     session[:error_text] = "invalid login: both passwords must match"
     session[:error_redirect] = '/login'
     redirect('/error')
-  elsif password !~ /^(?=.*\d)(?=.*[[:punct:]])(?=.*[[:upper:]]).*$/
-    session[:error_text] = "invalid login: password must contain at least one digit, one capital letter, and one special character"
+  elsif password !~ /^(?=.*\d)(?=.*[[:punct:]])(?=.*[[:upper:]]).*$/ || password.length < 8
+    session[:error_text] = "invalid login: password must be longer than 8 symbols and contain at least one digit, one capital letter, and one special character"
     session[:error_redirect] = '/login'
     redirect('/error')
   elsif Database.new.username_is_unique?(username) == false
