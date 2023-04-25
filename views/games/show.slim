@@ -1,8 +1,8 @@
-article class="showpage"
+div class="showpage"
   a class="showpage" href="/database" back 
-  div class="showpage"
+  article
     h1 #{game["title"]}
-    ol class = "viewpage"
+    ol class="viewpage"
       li class="showpage" #{game['title']} came out in <b>#{game["release_year"]}</b>
       li class="showpage" This copy of the game is for the <b>#{console["name"]}</b> console which came out in <b>#{console["release_year"]}</b> by the company <b>#{console["company"]}</b>
       - if game["part_of_series"] == "Yes"
@@ -10,4 +10,19 @@ article class="showpage"
       - else
         li class="showpage" The game is <b>not</b> part of a series of games
       li class="showpage" It can be described by the #{genre_or_genres} <b>#{genres}</b>
+    form class="showpage" action="/#{id}/writecomment" method="POST" autocomplete="off"
+      - if comments.length == 0 then comments_msg = "Be the first to share your thoughts on this game!"
+      - else comments_msg = "Share your thoughts on this game!"
+      textarea cols="30" rows="10" type="text" name="content" placeholder="#{comments_msg}"
+      input type="submit" value="submit"
+    div class="showpage2" 
+      - p comments
+      - comments.each do |comment|
+        article class="showpage"
+          div class="showpage3"
+            h4 class="showpage" #{comment["username"]} thinks:
+            -if whosloggedin == comment["username"]
+              form action="/#{id}/deletecomment/#{comment["id"]}" method="POST"
+                input class="showpage" type="submit" value="delete"/
+          p class="showpage" #{comment["content"]}
   img class="showpage" src="#{imgpath}" alt="current game"
